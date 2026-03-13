@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SentinelStream - AI-Driven Fraud Prevention Lambda
+
+Resources:
+  FraudDetectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.sentinel.sentinel_stream.OrderLambdaHandler::handleRequest
+      Runtime: java21
+      MemorySize: 2048
+      Timeout: 30
+      Policies:
+        - AmazonBedrockFullAccess
+      Events:
+        OrderApi:
+          Type: Api
+          Properties:
+            Path: /submit
+            Method: post
+Outputs:
+  SentinelStreamApi:
+    Description: "API Gateway endpoint URL for Prod stage for SentinelStream function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}://"
+

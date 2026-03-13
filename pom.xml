@@ -56,6 +56,20 @@
 			<version>20240303</version> <!-- 2024/2025 年推薦的穩定版本 -->
 		</dependency>
 
+		<!-- AWS Lambda Java Core -->
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-lambda-java-core</artifactId>
+			<version>1.2.3</version>
+		</dependency>
+
+		<!-- AWS Lambda Events (處理 API Gateway 傳進來的 JSON) -->
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-lambda-java-events</artifactId>
+			<version>3.11.4</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
