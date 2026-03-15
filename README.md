@@ -16,13 +16,13 @@
       "shippingCountry": "Ukraine"
   }
 ```
-🏗️ 系統架構亮點 (Architecture Highlights)
-本專案採用最現代化的 Serverless 架構，確保系統的高可用性與彈性伸縮能力：
-● Java 21 (LTS): 使用最新的 Java 版本，利用其效能優化與現代語法特性。
-● AWS Lambda (Pure Function): 捨棄沈重的 Spring Boot 框架，採用純 Lambda Handler 模式，將「冷啟動 (Cold Start)」時間降至最低。
-● Amazon Bedrock (Claude 3.5 Haiku): 核心風險分析由 AWS 最先進的生成式 AI 模型驅動，能夠理解複雜的地理政治風險與異常行為模式。
-● Amazon API Gateway: 作為系統的安全門戶，負責處理流量管控與 RESTful 路由轉發。
-● AWS SAM (Serverless Application Model): 實踐「架構即代碼 (IaC)」，確保開發環境與生產環境的一致性。
+🏗️ System Architecture (Updated)
+This system is built on a fully Serverless architecture to ensure high performance, scalability, and data persistence for global e-commerce transactions:
+1. Amazon API Gateway: Unified entry point for global transaction data, handling RESTful routing and traffic management.
+2. AWS Lambda: Core logic layer powered by Java 21 (Virtual Threads optimized). It achieves minimal resource consumption and lightning-fast response times through modern concurrency patterns.
+3. Amazon Bedrock: Fraud reasoning driven by Claude 3.5 Haiku. The model analyzes transaction context in milliseconds to provide structured risk scores and detailed insights.
+4. Amazon DynamoDB (New): Persistence Layer. A high-performance NoSQL table that automatically logs every fraud alert and AI-generated insight, ensuring full traceability and auditability.
+5. Security (IAM): Strictly follows the "Least Privilege Principle". The Lambda function is granted only specific CRUD permissions for the designated DynamoDB table, ensuring cloud asset security.
 
 🛠️ 技術棧 (Tech Stack)
 ● Language: Java 21
