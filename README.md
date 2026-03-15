@@ -1,33 +1,86 @@
-# 🛡️ SentinelStream - AI-Driven Fraud Prevention System
+# SentinelStream: AI-Driven Cross-Border Fraud Prevention
+> **A High-Concurrency, Cloud-Native Fraud Detection Engine for Global E-commerce**
+> *Developed for the 2026 Amazon Nova AI Hackathon*
 
-這是一個基於雲端原生架構開發的即時詐騙偵測系統，專為處理高併發的電商交易場景而設計。
+## 🌟 Project Overview
+SentinelStream is a sophisticated serverless fraud detection system designed to protect global e-commerce platforms from sophisticated cross-border transaction fraud. By leveraging **Java 21**, **Amazon Nova Lite**, and **Event-Driven Architecture**, SentinelStream provides real-time risk assessment and automated incident response with ultra-low latency.
 
-## 🚀 Live Demo API
-你可以使用 Postman 發送 `POST` 請求至以下端點進行即時測試：
-- **Endpoint:** `https://prwjcz06oc.execute-api.us-east-1.amazonaws.com/Prod/submit`
-- **Method:** `POST`
-- **Payload Example:**
+### 🏆 Key Value Propositions
+*   **Intelligent Reasoning**: Powered by **Amazon Nova Lite** to analyze complex fraud patterns (e.g., geopolitical risks, IP-mismatches).
+*   **Explainable AI (XAI)**: Generates human-readable reasons for every fraud decision to enhance auditability.
+*   **Automated Response**: Triggers instant high-risk! alerts via **Amazon SNS** for critical threats (Score > 0.8).
+*   **Scalable Persistence**: Stores all transaction insights in **Amazon DynamoDB** for long-term fraud trend analysis.
+
+---
+
+## 🛠️ Technical Stack
+- **AI/ML**: Amazon Bedrock (Model: `amazon.nova-lite-v1:0`)
+- **Backend**: Java 21 (Optimized with Virtual Threads for event-driven processing), leveraging AWS Lambda Core libraries for minimal cold-start latency.
+- **Cloud Infrastructure**: AWS Lambda, Amazon API Gateway
+- **Data & Messaging**: Amazon DynamoDB, Amazon SNS
+- **DevOps**: AWS SAM, Docker, Maven (Shade Plugin for Uber-Jar)
+- **Security**: IAM Least Privilege Policies
+
+---
+
+## 🏗️ System Architecture
+```mermaid
+graph TD
+User([Global Order Data]) -->|JSON POST| API[Amazon API Gateway]
+API -->|Trigger| Lambda{AWS Lambda Java 21}
+Lambda -->|Real-time Analysis| Nova[Amazon Nova Lite AI]
+Nova -->|Risk Score & Reason| Lambda
+Lambda -->|Save Record| DB[(Amazon DynamoDB)]
+Lambda -->|Score > 0.8| SNS[Amazon SNS]
+SNS -->|Instant Email| Admin[Security Team]
+    style User fill:#d433ff,stroke:#333,stroke-width:2px,color:#fff
+    style Nova fill:#ffcc00,stroke:#f66,stroke-width:3px,color:#000
+    style Lambda fill:#2ecc71,stroke:#333,stroke-width:2px,color:#fff
+```
+
+1.  **Ingestion Layer**: **Amazon API Gateway** receives global transaction data (JSON).
+2.  **Processing Layer**: **AWS Lambda (Java 21)** orchestrates the workflow and performs feature extraction.
+3. **Intelligence Layer**: **Amazon Nova Lite** performs real-time inference to generate a risk_score and reason. (Chosen for its **superior speed-to-cost ratio** and native integration with the AWS ecosystem).
+4.  **Persistence Layer**: **Amazon DynamoDB** stores transaction records and AI-generated insights.
+5.  **Action Layer**: **Amazon SNS** sends instant email notifications for high-risk anomalies.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- JDK 21 & Maven 3.9+
+- AWS CLI configured with appropriate credentials
+- Docker Desktop (for local SAM testing)
+
+### 📝 Configuration Note
+> **Critical Step**: Before deploying, please update the `Endpoint` in `template.yaml` (Line 22) with your own email address to receive real-time fraud alerts. After deployment, check your inbox and click **"Confirm Subscription"** in the AWS notification email to enable the SNS service.
+
+### Deployment
+1. **Build the Project**:
+   ```bash
+   mvn clean package -DskipTests
+   ```
+2. Deploy to AWS
+   ```bash
+   sam deploy --no-confirm-changeset
+   ```
+## 🚀 Live Demo & API Testing
+> **Note**: This is a **POST** endpoint. Accessing it directly via a web browser (GET) will result in a `Missing Authentication Token` error.
+
+- **Endpoint**: `https://prwjcz06oc.execute-api.us-east-1.amazonaws.com/Prod/submit`
+- **Recommended Tool**: Use [Postman](https://www.postman.com) or `curl`.
+- **Payload Example**:
   ```json
   {
       "userId": "user_suspect_125",
-      "amount": 5000.0,
+      "amount": 999999.9,
       "currency": "USD",
       "ipAddress": "185.225.69.1",
       "shippingCountry": "Ukraine"
   }
-```
-🏗️ System Architecture (Updated)
-This system is built on a fully Serverless architecture to ensure high performance, scalability, and data persistence for global e-commerce transactions:
-1. Amazon API Gateway: Unified entry point for global transaction data, handling RESTful routing and traffic management.
-2. AWS Lambda: Core logic layer powered by Java 21 (Virtual Threads optimized). It achieves minimal resource consumption and lightning-fast response times through modern concurrency patterns.
-3. Amazon Bedrock: Fraud reasoning driven by Claude 3.5 Haiku. The model analyzes transaction context in milliseconds to provide structured risk scores and detailed insights.
-4. Amazon DynamoDB (New): Persistence Layer. A high-performance NoSQL table that automatically logs every fraud alert and AI-generated insight, ensuring full traceability and auditability.
-5. Security (IAM): Strictly follows the "Least Privilege Principle". The Lambda function is granted only specific CRUD permissions for the designated DynamoDB table, ensuring cloud asset security.
 
-🛠️ 技術棧 (Tech Stack)
-● Language: Java 21
-● Cloud: AWS (Lambda, API Gateway, IAM)
-● AI Model: Anthropic Claude 3.5 Haiku via Amazon Bedrock
-● Deployment: AWS SAM, Maven
+---
 
+Developed by Iris for the 2026 Amazon Nova AI Hackathon.
 

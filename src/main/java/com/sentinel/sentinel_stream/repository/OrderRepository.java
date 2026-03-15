@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
-    // JpaRepository 內建了 save, findAll, findById 等功能，暫時不用自己寫 SQL
+public interface OrderRepository extends JpaRepository<Order, String> {
+    // JpaRepository provides built-in methods such as save(), findAll(), and findById().
+    // No custom SQL queries are required for standard CRUD operations at this stage.
 }
-

@@ -10,17 +10,16 @@ import java.time.LocalDateTime;
 @Table(name = "orders")
 public class Order {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id; // Unique transaction identifier (UUID)
 
     private String userId;
-    private BigDecimal amount;    // 訂單金額
-    private String currency;      // 幣別 (如 USD, TWD)
-    private String ipAddress;     // 關鍵：用來追蹤地理位置
-    private String shippingCountry; // 收貨國家
-    private String status;        // PENDING, APPROVED, REJECTED
-    private Double riskScore;     // AI 計算出的風險評分 (0-1)
-    private String riskReason;    // 讓AI紀錄原因
+    private BigDecimal amount;    // Total order amount
+    private String currency;      // Currency code (e.g., USD, TWD)
+    private String ipAddress;     // Crucial: Used for geolocation and anomaly tracking
+    private String shippingCountry; // Destination country for risk assessment
+    private String status;        // Transaction status: PENDING, APPROVED, REJECTED
+    private Double riskScore;     // AI-calculated risk score (Range: 0.0 - 1.0)
+    private String riskReason;    // Detailed reasoning provided by AI inference
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now(); // Timestamp for auditing and record-keeping
 }

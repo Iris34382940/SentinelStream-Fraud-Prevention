@@ -31,13 +31,13 @@
 		<spring-cloud.version>2025.1.0</spring-cloud.version>
 	</properties>
 	<dependencies>
-		<!-- 補足 Spring Cloud Function 要求的 WebFlux 相依性 -->
+		<!-- Required for Spring Cloud Function WebFlux integration -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
 
-		<!-- 確保 JSON 處理能力 -->
+		<!-- Standard JSON processing and databinding -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
@@ -46,24 +46,24 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>bedrockruntime</artifactId>
-			<version>2.30.7</version> <!-- 建議使用 2024/2025 的穩定版 -->
+			<version>2.30.7</version>
 		</dependency>
 
-		<!-- JSON 處理工具：支援 JSONObject 與 JSONArray -->
+		<!-- JSON Utility supporting JSONObject and JSONArray -->
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20240303</version> <!-- 2024/2025 年推薦的穩定版本 -->
+			<version>20240303</version>
 		</dependency>
 
-		<!-- AWS Lambda Java Core -->
+		<!-- AWS Lambda Java Core Library -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-lambda-java-core</artifactId>
 			<version>1.2.3</version>
 		</dependency>
 
-		<!-- AWS Lambda Events (處理 API Gateway 傳進來的 JSON) -->
+		<!-- AWS Lambda Events (Required for processing API Gateway JSON payloads) -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-lambda-java-events</artifactId>
@@ -74,6 +74,18 @@
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb</artifactId>
 			<version>2.30.7</version>
+		</dependency>
+
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sns</artifactId>
+			<version>2.30.7</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.15.2</version>
 		</dependency>
 
 		<dependency>

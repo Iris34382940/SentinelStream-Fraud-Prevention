@@ -7,14 +7,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.json.JSONObject;
 
-// 串接AI後加上的
+// Added for AI Integration
 import com.sentinel.sentinel_stream.service.FraudDetectionService;
-// 日誌紀錄(Logging)
+// Logging Support
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
-@Slf4j // 自動產生 log 變數
+@Slf4j // Automatically generates the 'log' variable via Lombok
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -23,32 +23,32 @@ public class OrderController {
     private FraudDetectionService fraudDetectionService;
 
     @Autowired
-    private OrderRepository orderRepository; // 串接AI後加上的
+    private OrderRepository orderRepository; // Added for persistence logic
 
-    // 1. 模擬接收新訂單 (由全球電商系統打過來)
+    // 1. Handle new incoming order requests (Simulated global e-commerce gateway)
     @PostMapping("/submit")
     public Order submitOrder(@RequestBody Order order) {
-        log.info("收到新訂單請求: User={}, Amount={}", order.getUserId(), order.getAmount());
+        log.info("Received new order request: User={}, Amount={}", order.getUserId(), order.getAmount());
 
         order.setStatus("PENDING");
 
-        // 呼叫 AI 前記錄
-        log.debug("正在呼叫 Amazon Bedrock (Claude 3.5 Haiku) 進行風險評估...");
+        // Log before AI invocation
+        log.debug("Invoking Amazon Bedrock (Amazon Nova Lite) for risk assessment...");
 
-        // 這裡呼叫真正的 AI！
-        // 1. 接收整個 JSON 物件
+        // Invoke the actual AI Model!
+        // 1. Receive the full JSON response from AI service
         JSONObject aiResponse = fraudDetectionService.analyzeRisk(order);
 
-        // 2. 從 JSON 中分別取出分數和理由
+        // 2. Extract score and reason from the JSON object
         double score = aiResponse.getDouble("risk_score");
         String reason = aiResponse.getString("reason");
 
-        // 3. 把結果存進 order 物件
+        // 3. Map AI results back to the Order object
         order.setRiskScore(score);
         order.setRiskReason(reason);
 
         if (score > 0.7) {
-            log.warn("偵測到高風險訂單！理由: {}", reason);
+            log.warn("High-risk order detected! Reason: {}", reason);
             order.setStatus("REJECTED (AI High Risk)");
         } else {
             order.setStatus("APPROVED");
@@ -57,9 +57,9 @@ public class OrderController {
         return orderRepository.save(order);
     }
 
-    // 2. 查詢所有訂單 (管理後台用)
-    @GetMapping("/all") // 加上路由，不然外面連不到這個方法
-    @Transactional(readOnly = true) // 告訴資料庫這只是讀取，不需要處理事務鎖定，效能更好
+    // 2. Query all orders (For administrative dashboard/auditing)
+    @GetMapping("/all") // Expose endpoint for external dashboard access
+    @Transactional(readOnly = true) // Read-only transaction to optimize database performance (avoids lock contention)
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
