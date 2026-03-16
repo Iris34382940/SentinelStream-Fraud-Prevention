@@ -1,13 +1,13 @@
-# SentinelStream: AI-Driven Cross-Border Fraud Prevention
+# SentinelStream: AI-Driven Cross-Border Fraud Prevention (Amazon Nova 2 Edition)
 > **A High-Concurrency, Cloud-Native Fraud Detection Engine for Global E-commerce**
 
 **Project for: [2026 Amazon Nova AI Hackathon]**
 
 ## 🌟 Project Overview
-SentinelStream is a sophisticated serverless fraud detection system designed to protect global e-commerce platforms from sophisticated cross-border transaction fraud. By leveraging **Java 21**, **Amazon Nova Lite**, and **Event-Driven Architecture**, SentinelStream provides real-time risk assessment and automated incident response with ultra-low latency.
+SentinelStream is a sophisticated serverless fraud detection system designed to protect global e-commerce platforms from sophisticated cross-border transaction fraud. By leveraging **Java 21**, **Amazon Nova 2 Lite**, and **Event-Driven Architecture**, SentinelStream provides real-time risk assessment and automated incident response with ultra-low latency.
 
 ### 🏆 Key Value Propositions
-*   **Intelligent Reasoning**: Powered by **Amazon Nova Lite** to analyze complex fraud patterns (e.g., geopolitical risks, IP-mismatches).
+*   **Intelligent Reasoning**: Powered by **Amazon Nova 2 Lite** to analyze complex fraud patterns (e.g., geopolitical risks, IP-mismatches).
 *   **Explainable AI (XAI)**: Generates human-readable reasons for every fraud decision to enhance auditability.
 *   **Automated Response**: Triggers instant high-risk! alerts via **Amazon SNS** for critical threats (Score > 0.8).
 *   **Scalable Persistence**: Stores all transaction insights in **Amazon DynamoDB** for long-term fraud trend analysis.
@@ -15,7 +15,7 @@ SentinelStream is a sophisticated serverless fraud detection system designed to 
 ---
 
 ## 🛠️ Technical Stack
-- **AI/ML**: Amazon Bedrock (Model: `amazon.nova-lite-v1:0`)
+- **AI/ML**: Amazon Bedrock (Model: `amazon.nova-2-lite-v1:0`)
 - **Backend**: Java 21 (Optimized with Virtual Threads for event-driven processing), leveraging AWS Lambda Core libraries for minimal cold-start latency.
 - **Cloud Infrastructure**: AWS Lambda, Amazon API Gateway
 - **Data & Messaging**: Amazon DynamoDB, Amazon SNS

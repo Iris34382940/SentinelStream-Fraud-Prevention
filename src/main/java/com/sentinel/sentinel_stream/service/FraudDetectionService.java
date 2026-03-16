@@ -20,16 +20,19 @@ public class FraudDetectionService {
 
     public JSONObject analyzeRisk(Order order) {
         // 1. Set Model ID to Amazon Nova Lite
-        String modelId = "amazon.nova-lite-v1:0";
+        String modelId = "us.amazon.nova-2-lite-v1:0";
 
         // Append reinforced instructions to the prompt for strict compliance with the response format
+        // 2. Utilize Nova 2 enhanced prompt logic
         String prompt = String.format(
-                "Analyze this e-commerce order for fraud risk. " +
-                        "Amount: %s %s, IP: %s, Destination: %s. " +
-                        "Return ONLY a JSON with keys 'risk_score' and 'reason'. " +
-                        "CRITICAL: The 'risk_score' MUST be a decimal between 0.0 and 1.0 (e.g., 0.15).",
+                "You are an expert E-commerce Fraud Analyst. " +
+                        "Task: Analyze the following order for fraud risk based on geopolitical factors, IP-location mismatch, and transaction amount. " +
+                        "Data - Amount: %s %s, IP: %s, Destination: %s. " +
+                        "Instructions: Think step-by-step to assess the risk. " +
+                        "Output: Return ONLY a JSON with keys 'risk_score' (decimal 0.0-1.0) and 'reason' (clear explanation).",
                 order.getAmount(), order.getCurrency(), order.getIpAddress(), order.getShippingCountry()
         );
+
 
         // 2. Construct the payload in the expected Amazon Nova format (Messages API)
         JSONObject payload = new JSONObject()
