@@ -32,7 +32,7 @@ This report documents the real-world performance and decision-making logic of th
   "createdAt": "2026-03-16T14:18:09.745687568"
 }
 ```
-> **Technical Analysis**: `APPROVED` (Score: 0.75) — International transaction with consistent location patterns. Recognized as a low-risk baseline order.
+> **Technical Analysis**: `APPROVED` (Score: 0.75) — Successfully identified a **cross-strait geographic mismatch** (IP in China vs. Destination in Taiwan). While the system flagged the geopolitical risk and potential proxy usage, the modest transaction amount ($50.00) kept the risk below the auto-rejection threshold.
 
 ---
 
@@ -66,13 +66,43 @@ This report documents the real-world performance and decision-making logic of th
 
 ---
 
+## 🛡️ Case C: Advanced Proxy/Routing Detection (Edge Case)
+### 📥 Postman Request
+```json
+{
+  "userId": "user_normal_001",
+  "amount": 50.0,
+  "currency": "USD",
+  "ipAddress": "1.33.0.1",
+  "shippingCountry": "Japan"
+}
+```
+### 🤖 System Response
+```json
+{
+  "id": "e0473145-201b-4b7b-b759-043b8a48ec48",
+  "userId": "user_normal_001",
+  "amount": 50.0,
+  "currency": "USD",
+  "ipAddress": "1.33.0.1",
+  "shippingCountry": "Japan",
+  "status": "APPROVED",
+  "riskScore": 0.75,
+  "riskReason": "The order exhibits a high risk due to a significant IP-destination location mismatch: the IP address 1.33.0.1 is registered in Singapore, while the destination address is in Japan. Such geographic discrepancies often indicate potential proxy usage or attempt to mask the true buyer location, raising suspicion of card-not-present fraud. Additionally, while the transaction amount of $50.0 USD is moderate and not inherently high-risk, the combination with the IP mismatch increases the likelihood of fraudulent activity. Geopolitical factors also play a role, as transactions involving Southeast Asia and East Asia can sometimes be associated with higher fraud rates due to regional differences in payment fraud prevalence.",
+  "createdAt": "2026-03-16T14:41:45.752"
+}
+```
+> **Technical Analysis**: `APPROVED` (Score: 0.75) — Demonstrates **Nova 2 Lite's** sophisticated reasoning. It identified a routing anomaly where a domestic-looking IP (registered in Singapore) was used for a Japan delivery, successfully flagging potential proxy usage.
+
+---
+
 ### 📊 Performance Summary
 
-
-| Scenario | Amount   | AI Risk Score | Decision | Core Inference Logic |
-| :--- |:---------|:--------------| :--- | :--- |
-| **Normal Order** | $50.00    | **0.75**      | **APPROVED** | Consistent international location patterns. |
-| **Fraud Suspect** | $5000.00 | **0.99**      | **REJECTED** | Blocked by safety filters due to high-value regional risk. |
+| Scenario | Amount | AI Risk Score | Decision | Core Inference Logic |
+| :--- | :--- | :--- | :--- | :--- |
+| **Normal Order** | $50.00 | **0.75** | **APPROVED** | Geographic mismatch (China/Taiwan) & regional risk. |
+| **Fraud Suspect** | $999,999.00 | **0.99** | **REJECTED** | Blocked by safety filters due to extreme anomaly. |
+| **Edge Case** | $50.00 | **0.75** | **APPROVED** | Advanced routing analysis; potential proxy detected. |
 
 ---
 
