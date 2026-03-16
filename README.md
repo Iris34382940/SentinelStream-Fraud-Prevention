@@ -39,9 +39,12 @@ SNS -->|Instant Email| Admin[Security Team]
     style Lambda fill:#2ecc71,stroke:#333,stroke-width:2px,color:#fff
 ```
 
+---
+
+🏗️ **System Architecture Breakdown**
 1.  **Ingestion Layer**: **Amazon API Gateway** receives global transaction data (JSON).
 2.  **Processing Layer**: **AWS Lambda (Java 21)** orchestrates the workflow and performs feature extraction.
-3. **Intelligence Layer**: **Amazon Nova Lite** performs real-time inference to generate a risk_score and reason. (Chosen for its **superior speed-to-cost ratio** and native integration with the AWS ecosystem).
+3.  **Intelligence Layer**: **Amazon Nova Lite** performs real-time inference to generate a risk_score and reason. (Chosen for its **superior speed-to-cost ratio** and native integration with the AWS ecosystem).
 4.  **Persistence Layer**: **Amazon DynamoDB** stores transaction records and AI-generated insights.
 5.  **Action Layer**: **Amazon SNS** sends instant email notifications for high-risk anomalies.
 
