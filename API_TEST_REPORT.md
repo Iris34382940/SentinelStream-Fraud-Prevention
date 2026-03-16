@@ -18,9 +18,6 @@ This report documents the real-world performance and decision-making logic of th
 }
 ```
 ### 🤖 System Response
-
-*<font color="red">AI Decision: APPROVED (Score: 0.3) - International transaction with consistent location patterns.</font>*
-
 ```json
 {
   "id": "4c8f4ad7-13d4-4ac6-9fae-4dfd07f24f12",
@@ -35,6 +32,7 @@ This report documents the real-world performance and decision-making logic of th
   "createdAt": "2026-03-15T14:52:27.636014575"
 }
 ```
+> **Technical Analysis**: `APPROVED` (Score: 0.35) — International transaction with consistent location patterns. Recognized as a low-risk baseline order.
 
 ---
 
@@ -64,19 +62,17 @@ This report documents the real-world performance and decision-making logic of th
   "createdAt": "2026-03-15T14:53:38.408753897"
 }
 ```
-**Technical Analysis**
-
-The **Amazon Nova Lite** model accurately flagged the combination of a high-value amount ($5,000) and a high-risk geographic location. Even though the current threshold for rejection is 0.8, the system successfully logged this event to **DynamoDB** and generated a precise risk reason.
+> **Technical Analysis**: The system, powered by **Amazon Nova Lite**, successfully identified this high-risk transaction. With a risk score of **0.99** (far exceeding the 0.8 rejection threshold), the engine immediately flagged the order as `REJECTED`. This case demonstrates the model's ability to recognize suspicious patterns while ensuring the event is fully persisted in **Amazon DynamoDB** for auditing.
 
 ---
 
 ### 📊 Performance Summary
 
 
-| Scenario | Amount | AI Risk Score | Decision | Core Inference Logic |
-| :--- | :--- | :--- | :--- | :--- |
-| **Normal Order** | $50.00 | 0.65 | **APPROVED** | Routine international transaction. |
-| **Fraud Suspect** | $5000.00 | 0.76 | **MONITORED** | Geographic & Value risk detected. |
+| Scenario | Amount   | AI Risk Score | Decision | Core Inference Logic |
+| :--- |:---------| :--- | :--- | :--- |
+| **Normal Order** | $50.00    | **0.35** | **APPROVED** | Consistent international location patterns. |
+| **Fraud Suspect** | $5000.00 | **0.99** | **REJECTED** | Blocked by safety filters due to high-value regional risk. |
 
 ---
 

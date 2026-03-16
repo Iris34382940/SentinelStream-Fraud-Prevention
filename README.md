@@ -1,6 +1,7 @@
 # SentinelStream: AI-Driven Cross-Border Fraud Prevention
 > **A High-Concurrency, Cloud-Native Fraud Detection Engine for Global E-commerce**
-> *Developed for the 2026 Amazon Nova AI Hackathon*
+
+**Project for: [2026 Amazon Nova AI Hackathon]**
 
 ## 🌟 Project Overview
 SentinelStream is a sophisticated serverless fraud detection system designed to protect global e-commerce platforms from sophisticated cross-border transaction fraud. By leveraging **Java 21**, **Amazon Nova Lite**, and **Event-Driven Architecture**, SentinelStream provides real-time risk assessment and automated incident response with ultra-low latency.
@@ -51,7 +52,6 @@ SNS -->|Instant Email| Admin[Security Team]
 ### Prerequisites
 - JDK 21 & Maven 3.9+
 - AWS CLI configured with appropriate credentials
-- Docker Desktop (for local SAM testing)
 
 ### 📝 Configuration Note
 > **Critical Step**: Before deploying, please update the `Endpoint` in `template.yaml` (Line 22) with your own email address to receive real-time fraud alerts. After deployment, check your inbox and click **"Confirm Subscription"** in the AWS notification email to enable the SNS service.
@@ -61,7 +61,7 @@ SNS -->|Instant Email| Admin[Security Team]
    ```bash
    mvn clean package -DskipTests
    ```
-2. Deploy to AWS
+2. **Deploy to AWS**:
    ```bash
    sam deploy --no-confirm-changeset
    ```
@@ -70,17 +70,38 @@ SNS -->|Instant Email| Admin[Security Team]
 
 - **Endpoint**: `https://prwjcz06oc.execute-api.us-east-1.amazonaws.com/Prod/submit`
 - **Recommended Tool**: Use [Postman](https://www.postman.com) or `curl`.
-- **Payload Example**:
-  ```json
-  {
-      "userId": "user_suspect_125",
-      "amount": 999999.9,
-      "currency": "USD",
-      "ipAddress": "185.225.69.1",
-      "shippingCountry": "Ukraine"
-  }
+
+### 📝 API Usage Example
+
+**1. Request Payload (Input):**
+```json
+{
+    "userId": "user_suspect_125",
+    "amount": 999999.9,
+    "currency": "USD",
+    "ipAddress": "185.225.69.1",
+    "shippingCountry": "Ukraine"
+}
+```
+**2. System Response (Output):**
+```json
+{
+  "id": "78430d89-f61a-4b9b-a599-3aceba926476",
+  "userId": "user_suspect_125",
+  "amount": 999999.9,
+  "currency": "USD",
+  "ipAddress": "185.225.69.1",
+  "shippingCountry": "Ukraine",
+  "status": "REJECTED",
+  "riskScore": 0.99,
+  "riskReason": "Inference blocked by safety filters - potential high-risk anomaly.",
+  "createdAt": "2026-03-16T02:33:03.263277611"
+}
+```
 
 ---
 
-Developed by Iris for the 2026 Amazon Nova AI Hackathon.
+✨ *<span style="color: #ff4d4f;">Developed by **Iris** for the **2026 Amazon Nova AI Hackathon**</span>*
+
+
 
