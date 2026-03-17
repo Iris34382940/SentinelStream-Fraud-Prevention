@@ -29,7 +29,7 @@ SentinelStream is a sophisticated serverless fraud detection system designed to 
 graph TD
 User([Global Order Data]) -->|JSON POST| API[Amazon API Gateway]
 API -->|Trigger| Lambda{AWS Lambda Java 21}
-Lambda -->|Real-time Analysis| Nova[Amazon Nova Lite AI]
+Lambda -->|Real-time Analysis| Nova[Amazon Nova 2 Lite AI]
 Nova -->|Risk Score & Reason| Lambda
 Lambda -->|Save Record| DB[(Amazon DynamoDB)]
 Lambda -->|Score > 0.8| SNS[Amazon SNS]
@@ -44,7 +44,7 @@ SNS -->|Instant Email| Admin[Security Team]
 🏗️ **System Architecture Breakdown**
 1.  **Ingestion Layer**: **Amazon API Gateway** receives global transaction data (JSON).
 2.  **Processing Layer**: **AWS Lambda (Java 21)** orchestrates the workflow and performs feature extraction.
-3.  **Intelligence Layer**: **Amazon Nova Lite** performs real-time inference to generate a risk_score and reason. (Chosen for its **superior speed-to-cost ratio** and native integration with the AWS ecosystem).
+3.  **Intelligence Layer**: **Amazon Nova 2 Lite** performs real-time inference to generate a risk_score and reason. (Chosen for its superior speed-to-cost ratio, **enhanced reasoning**, and native integration with the AWS ecosystem).
 4.  **Persistence Layer**: **Amazon DynamoDB** stores transaction records and AI-generated insights.
 5.  **Action Layer**: **Amazon SNS** sends instant email notifications for high-risk anomalies.
 
