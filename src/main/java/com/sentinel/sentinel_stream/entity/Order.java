@@ -1,17 +1,18 @@
 package com.sentinel.sentinel_stream.entity;
 
-import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@Entity
-@Table(name = "orders")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order {
-    @Id
     private String id; // Unique transaction identifier (UUID)
-
     private String userId;
     private BigDecimal amount;    // Total order amount
     private String currency;      // Currency code (e.g., USD, TWD)
@@ -21,5 +22,5 @@ public class Order {
     private Double riskScore;     // AI-calculated risk score (Range: 0.0 - 1.0)
     private String riskReason;    // Detailed reasoning provided by AI inference
 
-    private LocalDateTime createdAt = LocalDateTime.now(); // Timestamp for auditing and record-keeping
+    private String createdAt;
 }
