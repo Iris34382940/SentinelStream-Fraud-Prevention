@@ -34,12 +34,10 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
 	<dependencies>
-		<!-- 解決 SLF4J: Failed to load class 錯誤，讓 AWS SDK 順利啟動 -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-nop</artifactId>
+			<artifactId>slf4j-simple</artifactId>
 			<version>2.0.13</version>
 		</dependency>
 		<dependency>
@@ -47,56 +45,68 @@
 			<artifactId>json</artifactId>
 			<version>20240303</version>
 		</dependency>
-
-		<!-- Standard JSON processing and databinding -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>2.17.0</version>
 		</dependency>
-
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>bedrockruntime</artifactId>
 		</dependency>
-
-		<!-- AWS Lambda Java Core Library -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-lambda-java-core</artifactId>
 			<version>1.2.3</version>
 		</dependency>
-
-		<!-- AWS Lambda Events (Required for processing API Gateway JSON payloads) -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-lambda-java-events</artifactId>
 			<version>3.11.4</version>
 		</dependency>
-
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>sns</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>ses</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>scheduler</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>iam</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
 			<version>2.15.2</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>1.18.34</version>
 		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.10.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<version>5.2.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -136,5 +146,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

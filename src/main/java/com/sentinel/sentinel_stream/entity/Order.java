@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -21,6 +19,6 @@ public class Order {
     private String status;        // Transaction status: PENDING, APPROVED, REJECTED
     private Double riskScore;     // AI-calculated risk score (Range: 0.0 - 1.0)
     private String riskReason;    // Detailed reasoning provided by AI inference
-
     private String createdAt;
+    private String zoneId;
 }

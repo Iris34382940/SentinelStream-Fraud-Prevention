@@ -1,5 +1,4 @@
 package com.sentinel.sentinel_stream;
-
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
@@ -17,117 +16,120 @@ import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-/**
- * AWS Lambda Handler for processing e-commerce order fraud detection.
- */
 public class OrderLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-
-    // Configure Jackson ObjectMapper with Java 21 Time support
+    private static final Region CURRENT_REGION = Region.of(System.getenv("AWS_REGION"));
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    private static final Map<String, Map<String, String>> TRANSLATIONS = Map.of(
+            "Traditional Chinese (Taiwan)", Map.of(
+                    "subject", "🚨 高風險詐欺警告！",
+                    "body", "偵測到可疑交易！\n用戶: %s\n風險評分: %s\n原因: %s"
+            ),
+            "Simplified Chinese", Map.of(
+                    "subject", "🚨 高风险欺诈警告！",
+                    "body", "检测到可疑交易！\n用户: %s\n风险评分: %s\n原因: %s"
+            ),
+            "Japanese", Map.of(
+                    "subject", "🚨 高リスク詐欺警告！",
+                    "body", "不正なアクティビティが検出されました！\nユーザー: %s\nリスクスコア: %s\n理由: %s"
+            ),
+            "Korean", Map.of(
+                    "subject", "🚨 고위험 사기 경고!",
+                    "body", "의심스러운 거래가 감지되었습니다!\n사용자: %s\n위험 점수: %s\n사유: %s"
+            ),
+            "French", Map.of(
+                    "subject", "🚨 Alerte à la fraude à haut risque !",
+                    "body", "Activité frauduleuse détectée !\nUtilisateur : %s\nScore de risque : %s\nRaison : %s"
+            ),
+            "English", Map.of(
+                    "subject", "🚨 High Risk Fraud Alert!",
+                    "body", "Fraudulent activity detected!\nUser: %s\nRisk Score: %s\nReason: %s"
+            )
+    );
+    // 💡 將所有 .region(...) 指向偵測到的區域
 
-    // 1. Initialize AWS SDK Clients (DynamoDB & SNS)
     private static final DynamoDbClient dbClient = DynamoDbClient.builder()
-            .region(Region.US_EAST_1)
+            .region(CURRENT_REGION)
             .build();
-
     private static final BedrockRuntimeClient bedrockClient = BedrockRuntimeClient.builder()
-            .region(Region.US_EAST_1).build();
-
-    private static final FraudDetectionService fraudService = new FraudDetectionService(bedrockClient);
-
-    private static final SnsClient snsClient = SnsClient.builder()
-            .region(Region.US_EAST_1)
+            .region(CURRENT_REGION)
             .build();
-
-
+    private static final FraudDetectionService fraudService = new FraudDetectionService(bedrockClient);
+    private static final SnsClient snsClient = SnsClient.builder()
+            .region(CURRENT_REGION)
+            .build();
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
         // 取得 Lambda 專用的記錄器
         com.amazonaws.services.lambda.runtime.LambdaLogger logger = context.getLogger();
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
-
         try {
-            // Log 1: 記錄接收到的原始請求
             logger.log("Received order request: " + request.getBody());
-
             // 1. Deserialize the incoming JSON order from API Gateway
             Order order = objectMapper.readValue(request.getBody(), Order.class);
-
             // --- Assign a unique UUID to the order object ---
             order.setId(UUID.randomUUID().toString());
             order.setCreatedAt(java.time.Instant.now().toString());
-
             // 2. Invoke Amazon Nova AI for fraud risk inference
-            FraudAssessment assessment = fraudService.analyzeRisk(order);
-
+            String language = getLanguageByZone(order.getZoneId());
+            FraudAssessment assessment = fraudService.analyzeRisk(order, language);
             // 直接從物件拿資料，IDE 會幫忙檢查拼字
             double score = assessment.getRiskScore();
             String reason = assessment.getReason();
             String status = assessment.getStatus();
-
             // --- Enrich the order object with AI analysis results ---
             order.setRiskScore(score);
             order.setRiskReason(reason);
             order.setStatus(status);
-
-            // Log 2: 記錄 AI 判定的分數與狀態
             logger.log("AI Assessment - OrderID: " + order.getId() + ", Status: " + status + ", Score: " + score);
-
             // 3. Persist transaction data into Amazon DynamoDB
             String tableName = System.getenv("TABLE_NAME");
             Map<String, AttributeValue> item = new HashMap<>();
             item.put("orderId", AttributeValue.builder().s(order.getId()).build());
             item.put("userId", AttributeValue.builder().s(order.getUserId()).build());
-            item.put("riskScore", AttributeValue.builder().n(String.valueOf(score)).build());
-            item.put("reason", AttributeValue.builder().s(reason).build());
+            item.put("riskScore", AttributeValue.builder().n(String.valueOf(order.getRiskScore())).build());
+            item.put("reason", AttributeValue.builder().s(order.getRiskReason()).build());
             item.put("createdAt", AttributeValue.builder().s(order.getCreatedAt()).build());
             item.put("status", AttributeValue.builder().s(order.getStatus()).build());
-
-            dbClient.putItem(PutItemRequest.builder()
-                    .tableName(tableName)
-                    .item(item)
-                    .build());
-
-            // --- 4. High-Risk Alert: Trigger automated Email notification via Amazon SNS ---
+            dbClient.putItem(PutItemRequest.builder().tableName(tableName).item(item).build());
             if ("REJECTED".equals(status)) {
                 String snsTopicArn = System.getenv("SNS_TOPIC_ARN");
+                Map<String, String> content = TRANSLATIONS.getOrDefault(language, TRANSLATIONS.get("English"));
 
-                // Log 3: 記錄發送警告
-                logger.log("High risk detected. Sending SNS alert to: " + snsTopicArn);
+                String localizedSubject = content.get("subject");
+                String localizedMessage = String.format(content.get("body"), order.getUserId(), score, reason);
+
+                logger.log("High risk detected. Sending SNS alert in [" + language + "] to: " + snsTopicArn);
 
                 snsClient.publish(PublishRequest.builder()
                         .topicArn(snsTopicArn)
-                        .subject("🚨 High Risk Fraud Alert!")
-                        .message("Fraudulent activity detected!\nUser: " + order.getUserId() +
-                                "\nRisk Score: " + score +
-                                "\nReason: " + reason)
+                        .subject(localizedSubject)
+                        .message(localizedMessage)
                         .build());
             }
-
             // --- Serialize the enriched order object back to JSON for the response ---
             String fullResponseBody = objectMapper.writeValueAsString(order);
-
             return response
                     .withStatusCode(200)
                     .withHeaders(Map.of("Content-Type", "application/json"))
                     .withBody(fullResponseBody);
-
         } catch (Exception e) {
-            // Log 4: 記錄嚴重錯誤訊息
-            logger.log("CRITICAL ERROR: Failed to process order. Message: " + e.getMessage());
-
+            logger.log("CRITICAL ERROR: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             e.printStackTrace();
-
-
-            // Error handling for system failures
-            return response.withStatusCode(500).withBody("System Error: " + e.getMessage());
+            throw new RuntimeException("Internal Service Error processing order", e);
         }
+    }
+    private String getLanguageByZone(String zoneId) {
+        if (zoneId == null) return "English";
+        if (zoneId.contains("Taipei") || zoneId.contains("Hong_Kong")) return "Traditional Chinese (Taiwan)";
+        if (zoneId.contains("Shanghai") || zoneId.contains("Singapore")) return "Simplified Chinese";
+        if (zoneId.contains("Tokyo")) return "Japanese";
+        if (zoneId.contains("Seoul")) return "Korean";
+        if (zoneId.contains("Paris") || zoneId.contains("Brussels")) return "French";
+        return "English";
     }
 }

@@ -1,66 +1,211 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: SentinelStream - AI-Driven Fraud Prevention (Amazon Nova AI Hackathon Edition)
-
+Description: SentinelStream - Enterprise AI-Driven Fraud Prevention Engine
+Parameters:
+  AppTimeZone:
+    Type: String
+    Default: "Asia/Taipei"
+  AdminEmail:
+    Type: String
+    Default: "ma34382940@gmail.com"
+Globals:
+  Function:
+    Runtime: java21
+    CodeUri: target/sentinel-stream-0.0.1-SNAPSHOT.jar
+    SnapStart: { ApplyOn: PublishedVersions }
+    AutoPublishAlias: live
+    Tracing: Active
+    Timeout: 60
+    MemorySize: 1024
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref OrdersTable
+        SCHEDULE_NAME: "SentinelStream-Report-Task"
+        MODEL_ID: "us.amazon.nova-2-lite-v1:0"
+        TARGET_TIMEZONE: !Ref AppTimeZone
+        RECIPIENT_EMAIL: !Ref AdminEmail
+        SOURCE_EMAIL: !Ref AdminEmail
 Resources:
-  # 1. Define DynamoDB Table for Transaction Persistence
-  OrdersTable:
-    Type: AWS::Serverless::SimpleTable
+  MyVerifiedEmail:
+    Type: AWS::SES::EmailIdentity
     Properties:
-      PrimaryKey:
-        Name: orderId
-        Type: String
-
-  # 2. Define an SNS Topic for real-time fraud alerts
+      EmailIdentity: !Ref AdminEmail
+  # Explicitly define API Gateway to enable CORS and API Key requirements
+  ServerlessRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Api-Key,Authorization'"
+        AllowOrigin: "'*'"
+      Auth:
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          UsagePlanName: SentinelStreamPlan
+          Quota:
+            Limit: 1000
+            Period: MONTH
+  SentinelStreamUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      UsagePlanName: SentinelStreamPlan
+      ApiStages:
+        - ApiId: !Ref ServerlessRestApi
+          Stage: Prod
+      Quota:
+        Limit: 1000
+        Period: MONTH
+  UsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: "m0pfg9xgfi"
+      KeyType: API_KEY
+      UsagePlanId: !Ref SentinelStreamUsagePlan
+  TrendAnalysisInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Sub "${TrendAnalysisFunction}:live"
+      Action: "lambda:InvokeFunction"
+      Principal: "scheduler.amazonaws.com"
+      SourceArn: !Sub "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/SentinelStream-*"
+  ConfigInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Sub "${ConfigFunction}:live"
+      Action: "lambda:InvokeFunction"
+      Principal: "scheduler.amazonaws.com"
+      SourceArn: !Sub "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/SentinelStream-*"
+  # --- 1. Database and Notifications ---
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - { AttributeName: orderId, AttributeType: S }
+        - { AttributeName: status, AttributeType: S }
+        - { AttributeName: createdAt, AttributeType: S }
+      KeySchema:
+        - { AttributeName: orderId, KeyType: HASH }
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: StatusDateIndex
+          KeySchema:
+            - { AttributeName: status, KeyType: HASH }
+            - { AttributeName: createdAt, KeyType: RANGE }
+          Projection: {ProjectionType: ALL}
   FraudAlertTopic:
     Type: AWS::SNS::Topic
-
-  # 3. Subscribe your email to the alert topic
   MyEmailSubscription:
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: "ma34382940@gmail.com"
+      Endpoint: !Ref AdminEmail
       Protocol: email
       TopicArn: !Ref FraudAlertTopic
-
-  # 4. Core Lambda Function (Java 21 + Nova AI Integration)
+  # IAM Role that allows EventBridge Scheduler to invoke Lambda functions
+  SchedulerToLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: scheduler.amazonaws.com }
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "lambda:InvokeFunction"
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
+  # --- 2. Core Feature: Real-time Fraud Detection ---
   FraudDetectionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: target/sentinel-stream-0.0.1-SNAPSHOT.jar
       Handler: com.sentinel.sentinel_stream.OrderLambdaHandler::handleRequest
-      Runtime: java21
       MemorySize: 1024
-      Timeout: 60
-      Tracing: Active # Enable active AWS X-Ray tracing for observability
-      Tags: # Add metadata tags for resource management and governance
+      Tags:
         Project: SentinelStream
-        Event: AmazonNovaAIHackathon
+        Environment: Production
       Environment:
         Variables:
           SNS_TOPIC_ARN: !Ref FraudAlertTopic
-          TABLE_NAME: !Ref OrdersTable
       Policies:
         - Statement:
             - Effect: Allow
-              Action:
-                - bedrock:InvokeModel
-              Resource:
-                - !Sub "arn:aws:bedrock:*:*:*/*nova*"
-        - DynamoDBCrudPolicy:
-            TableName: !Ref OrdersTable
-        - SNSPublishMessagePolicy:
-            TopicName: !GetAtt FraudAlertTopic.TopicName
+              Action: "bedrock:InvokeModel"
+              Resource: !Sub "arn:aws:bedrock:*:*:*/*nova-*"
+        - DynamoDBCrudPolicy: {TableName: !Ref OrdersTable}
+        - SNSPublishMessagePolicy: {TopicName: !GetAtt FraudAlertTopic.TopicName}
       Events:
         OrderApi:
           Type: Api
-          Properties:
-            Path: /submit
-            Method: post
-
-# 5. Define Outputs to display the API Gateway URL
+          Properties: {Path: /submit, Method: post, RestApiId: !Ref ServerlessRestApi}
+  # --- 3. Trend Analysis Feature (AI Reports) ---
+  TrendAnalysisFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.sentinel.sentinel_stream.TrendLambdaHandler::handleRequest
+      Timeout: 300
+      Environment:
+        Variables:
+          SCHEDULER_ROLE_ARN: !GetAtt SchedulerToLambdaRole.Arn
+          TARGET_TIMEZONE: !Ref AppTimeZone
+      Policies:
+        - DynamoDBCrudPolicy: {TableName: !Ref OrdersTable}
+        - Statement:
+            - Effect: Allow
+              Action: ["ses:SendEmail", "ses:SendRawEmail"]
+              Resource: "*"
+            - Effect: Allow
+              Action: [ "bedrock:InvokeModel" ]
+              Resource: !Sub "arn:aws:bedrock:*:*:*/*nova-*"
+            - Effect: Allow
+              Action: [ "scheduler:CreateSchedule", "scheduler:UpdateSchedule", "scheduler:DeleteSchedule", "scheduler:GetSchedule"]
+              Resource: !Sub "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/SentinelStream-*"
+            - Effect: Allow
+              Action: ["iam:PassRole", "iam:GetRole"]
+              Resource: !GetAtt SchedulerToLambdaRole.Arn
+              Condition:
+                StringLike:
+                  "iam:PassedToService": "scheduler.amazonaws.com"
+  # --- 4. Configuration API (Endpoints for frontend settings) ---
+  ConfigFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.sentinel.sentinel_stream.ConfigLambdaHandler::handleRequest
+      Environment:
+        Variables:
+          TREND_LAMBDA_ARN: !Sub "${TrendAnalysisFunction.Arn}:live"
+          SCHEDULER_ROLE_ARN: !GetAtt SchedulerToLambdaRole.Arn
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref OrdersTable }
+        - Statement:
+            - Effect: Allow
+              Action: [ "scheduler:CreateSchedule", "scheduler:UpdateSchedule", "scheduler:DeleteSchedule", "scheduler:GetSchedule"]
+              Resource: !Sub "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/SentinelStream-*"
+            - Effect: Allow
+              Action: ["iam:PassRole", "iam:GetRole"]
+              Resource: !GetAtt SchedulerToLambdaRole.Arn
+              Condition:
+                StringLike:
+                  "iam:PassedToService": "scheduler.amazonaws.com"
+      Events:
+        ConfigApi:
+          Type: Api
+          Properties: { Path: /settings, Method: post, RestApiId: !Ref ServerlessRestApi}
 Outputs:
-  SentinelStreamApi:
-    Description: "API Gateway endpoint URL"
+  OrdersTableName:
+    Description: "DynamoDB Table Name"
+    Value: !Ref OrdersTable
+  SubmitOrderApi:
+    Description: "API for submitting orders (Requires API Key)"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/submit"
-
+  UpdateSettingsApi:
+    Description: "API for configuration (Requires API Key)"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/settings"
+  ApiKeyConsoleLink:
+    Description: "Go to API Gateway Console to get your API Key"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/apigateway/home?region=${AWS::Region}&#/api-keys"
