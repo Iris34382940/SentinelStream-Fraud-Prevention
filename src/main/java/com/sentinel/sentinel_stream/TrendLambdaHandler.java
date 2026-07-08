@@ -27,6 +27,7 @@ public class TrendLambdaHandler implements RequestHandler<Map<String, Object>, S
     private final String schedulerRoleArn = System.getenv("SCHEDULER_ROLE_ARN");
     private final FraudDetectionService fraudService;
     private final String defaultTimeZone = System.getenv().getOrDefault("TARGET_TIMEZONE", "Asia/Taipei");
+    private final String defaultLanguage = System.getenv().getOrDefault("TARGET_LANGUAGE", "English");
     private static final String CONFIG_PK = "SYSTEM_REPORT_STATE";
     public TrendLambdaHandler() {
         Region region = Region.of(System.getenv("AWS_REGION"));
@@ -115,6 +116,7 @@ public class TrendLambdaHandler implements RequestHandler<Map<String, Object>, S
             String reportDateRange = reportStartDate + " ~ " + displayEndDate;
             String sinceDateStr = reportStartDate.atStartOfDay(userZone).toInstant().toString();
             String untilDateStr = reportEndDate.atStartOfDay(userZone).toInstant().toString();
+            String targetLanguage = config.getOrDefault("targetLanguage", AttributeValue.fromS(defaultLanguage)).s();
             var queryPaginator = dbClient.queryPaginator(QueryRequest.builder()
                     .tableName(tableName).indexName("StatusDateIndex")
                     .keyConditionExpression("#s = :statusValue AND createdAt BETWEEN :since AND :until")
@@ -128,7 +130,6 @@ public class TrendLambdaHandler implements RequestHandler<Map<String, Object>, S
                     .filter(item -> item.containsKey("reason"))
                     .map(item -> item.get("reason").s())
                     .collect(Collectors.groupingBy(r -> r, Collectors.counting()));
-            String targetLanguage = getLanguageByZone(targetZoneId);
             String reportContent;
             if (reasonCounts.isEmpty()) {
                 reportContent = getEmptyReportByLanguage(targetLanguage, reportDateRange);
@@ -341,7 +342,7 @@ public class TrendLambdaHandler implements RequestHandler<Map<String, Object>, S
                 disclaimer = "⚠️ Clause de non-responsabilité : Les suggestions de l'IA sont à titre de référence.";
                 footer = "Cordialement, Centre de surveillance SentinelStream";
                 break;
-            case "Simplified Chinese":
+            case "SimplifiedChinese":
                 header = "SENTINEL STREAM | AI 欺诈趋势分析报告";
                 timeLabel = "分析时间：";
                 statusLine = "监测状态：系统运作正常";
@@ -350,7 +351,7 @@ public class TrendLambdaHandler implements RequestHandler<Map<String, Object>, S
                 disclaimer = "⚠️ 免责声明：AI 建议仅供技术团队参考，执行重大防御变更前请进行人工覆核。";
                 footer = "SentinelStream 监测中心 敬上";
                 break;
-            case "Traditional Chinese (Taiwan)":
+            case "TraditionalChinese":
                 header = "SENTINEL STREAM | AI 詐欺趨勢分析報告";
                 timeLabel = "分析時間：";
                 statusLine = "監測狀態：系統運作正常";
@@ -397,10 +398,10 @@ public class TrendLambdaHandler implements RequestHandler<Map<String, Object>, S
             case "French":
                 footerMsg = "\n\n------------------------------------------------------------------------------------ \nCe rapport est généré automatiquement par SentinelStream. Pour modifier vos paramètres, veuillez contacter l'administrateur.";
                 break;
-            case "Simplified Chinese":
+            case "SimplifiedChinese":
                 footerMsg = "\n\n------------------------------------------------------------------------------------ \n本报告由 SentinelStream 自动生成。如需更改设置，请聯繫管理員。";
                 break;
-            case "Traditional Chinese (Taiwan)":
+            case "TraditionalChinese":
                 footerMsg = "\n\n------------------------------------------------------------------------------------ \n此報告由 SentinelStream 自動生成。如需更改設定，請聯繫管理員。";
                 break;
             default: // English
@@ -426,22 +427,13 @@ public class TrendLambdaHandler implements RequestHandler<Map<String, Object>, S
             throw new RuntimeException("Failed to send email via SES: " + e.getMessage());
         }
     }
-    private String getLanguageByZone(String zoneId) {
-        if (zoneId == null) return "English";
-        if (zoneId.contains("Taipei") || zoneId.contains("Hong_Kong")) return "Traditional Chinese (Taiwan)";
-        if (zoneId.contains("Shanghai") || zoneId.contains("Singapore")) return "Simplified Chinese";
-        if (zoneId.contains("Tokyo")) return "Japanese";
-        if (zoneId.contains("Seoul")) return "Korean";
-        if (zoneId.contains("Paris") || zoneId.contains("Brussels")) return "French";
-        return "English";
-    }
     private String getEmptyReportByLanguage(String language, String dateRange) {
         switch (language) {
-            case "Traditional Chinese (Taiwan)":
+            case "TraditionalChinese":
                 return String.format(
                         "親愛的使用者：\n\n在此報告區間 (%s) 內，SentinelStream 守護中心未偵測到任何違規或欺詐行為。\n\n🛡️ 狀態：運作正常\n✨ 建議：無需採取任何行動，祝您有愉快的一天！",
                         dateRange);
-            case "Simplified Chinese":
+            case "SimplifiedChinese":
                 return String.format(
                         "亲爱的用户：\n\n在此报告区间 (%s) 内，SentinelStream 守护中心未侦测到任何违规或欺诈行为。\n\n🛡️ 状态：运作正常\n✨ 建议：无需采取任何行动，祝您有愉快的一天！",
                         dateRange);

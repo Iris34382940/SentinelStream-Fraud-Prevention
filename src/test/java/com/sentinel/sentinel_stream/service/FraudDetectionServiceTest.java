@@ -22,10 +22,9 @@ class FraudDetectionServiceTest {
         // 1. 模擬 (Mock) Bedrock Client
         BedrockRuntimeClient mockBedrock = Mockito.mock(BedrockRuntimeClient.class);
 
-        // 2. 構建正確的 JSON 結構 (關鍵修正：補齊 content 陣列與內層 JSON)
+        // 2. 構建正確的 JSON 結構 (補齊 content 陣列與內層 JSON)
         String innerAiJson = "{\"analysis\": \"Normal pattern detected.\", \"risk_score\": 0.1, \"reason\": \"Safe source.\"}";
 
-        // 這是 AWS Bedrock 要求的完整回傳格式：output -> message -> content ->
         String mockJsonResponse = """
 {
 "output": {

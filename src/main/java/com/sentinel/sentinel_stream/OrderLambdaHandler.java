@@ -25,11 +25,11 @@ public class OrderLambdaHandler implements RequestHandler<APIGatewayProxyRequest
             .registerModule(new JavaTimeModule())
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     private static final Map<String, Map<String, String>> TRANSLATIONS = Map.of(
-            "Traditional Chinese (Taiwan)", Map.of(
+            "TraditionalChinese", Map.of(
                     "subject", "🚨 高風險詐欺警告！",
                     "body", "偵測到可疑交易！\n用戶: %s\n風險評分: %s\n原因: %s"
             ),
-            "Simplified Chinese", Map.of(
+            "SimplifiedChinese", Map.of(
                     "subject", "🚨 高风险欺诈警告！",
                     "body", "检测到可疑交易！\n用户: %s\n风险评分: %s\n原因: %s"
             ),
@@ -50,7 +50,6 @@ public class OrderLambdaHandler implements RequestHandler<APIGatewayProxyRequest
                     "body", "Fraudulent activity detected!\nUser: %s\nRisk Score: %s\nReason: %s"
             )
     );
-    // 💡 將所有 .region(...) 指向偵測到的區域
 
     private static final DynamoDbClient dbClient = DynamoDbClient.builder()
             .region(CURRENT_REGION)
@@ -75,7 +74,7 @@ public class OrderLambdaHandler implements RequestHandler<APIGatewayProxyRequest
             order.setId(UUID.randomUUID().toString());
             order.setCreatedAt(java.time.Instant.now().toString());
             // 2. Invoke Amazon Nova AI for fraud risk inference
-            String language = getLanguageByZone(order.getZoneId());
+            String language = System.getenv().getOrDefault("TARGET_LANGUAGE", "English");
             FraudAssessment assessment = fraudService.analyzeRisk(order, language);
             // 直接從物件拿資料，IDE 會幫忙檢查拼字
             double score = assessment.getRiskScore();
@@ -122,14 +121,5 @@ public class OrderLambdaHandler implements RequestHandler<APIGatewayProxyRequest
             e.printStackTrace();
             throw new RuntimeException("Internal Service Error processing order", e);
         }
-    }
-    private String getLanguageByZone(String zoneId) {
-        if (zoneId == null) return "English";
-        if (zoneId.contains("Taipei") || zoneId.contains("Hong_Kong")) return "Traditional Chinese (Taiwan)";
-        if (zoneId.contains("Shanghai") || zoneId.contains("Singapore")) return "Simplified Chinese";
-        if (zoneId.contains("Tokyo")) return "Japanese";
-        if (zoneId.contains("Seoul")) return "Korean";
-        if (zoneId.contains("Paris") || zoneId.contains("Brussels")) return "French";
-        return "English";
     }
 }

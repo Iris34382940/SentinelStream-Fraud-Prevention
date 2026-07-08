@@ -5,6 +5,9 @@ Parameters:
   AppTimeZone:
     Type: String
     Default: "Asia/Taipei"
+  AdminLanguage:
+    Type: String
+    Default: "TraditionalChinese"
   AdminEmail:
     Type: String
     Default: "ma34382940@gmail.com"
@@ -12,17 +15,19 @@ Globals:
   Function:
     Runtime: java21
     CodeUri: target/sentinel-stream-0.0.1-SNAPSHOT.jar
-    SnapStart: { ApplyOn: PublishedVersions }
     AutoPublishAlias: live
     Tracing: Active
     Timeout: 60
     MemorySize: 1024
+    SnapStart:
+      ApplyOn: PublishedVersions
     Environment:
       Variables:
         TABLE_NAME: !Ref OrdersTable
         SCHEDULE_NAME: "SentinelStream-Report-Task"
         MODEL_ID: "us.amazon.nova-2-lite-v1:0"
         TARGET_TIMEZONE: !Ref AppTimeZone
+        TARGET_LANGUAGE: !Ref AdminLanguage
         RECIPIENT_EMAIL: !Ref AdminEmail
         SOURCE_EMAIL: !Ref AdminEmail
 Resources:
@@ -41,14 +46,10 @@ Resources:
         AllowOrigin: "'*'"
       Auth:
         ApiKeyRequired: true
-        UsagePlan:
-          CreateUsagePlan: PER_API
-          UsagePlanName: SentinelStreamPlan
-          Quota:
-            Limit: 1000
-            Period: MONTH
   SentinelStreamUsagePlan:
     Type: AWS::ApiGateway::UsagePlan
+    DependsOn:
+      - ServerlessRestApiProdStage
     Properties:
       UsagePlanName: SentinelStreamPlan
       ApiStages:
@@ -66,14 +67,14 @@ Resources:
   TrendAnalysisInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Sub "${TrendAnalysisFunction}:live"
+      FunctionName: !Ref TrendAnalysisFunction.Alias
       Action: "lambda:InvokeFunction"
       Principal: "scheduler.amazonaws.com"
       SourceArn: !Sub "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/SentinelStream-*"
   ConfigInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Sub "${ConfigFunction}:live"
+      FunctionName: !Ref ConfigFunction.Alias
       Action: "lambda:InvokeFunction"
       Principal: "scheduler.amazonaws.com"
       SourceArn: !Sub "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/SentinelStream-*"

@@ -41,31 +41,52 @@ public class FraudDetectionService {
                 .getString("text");
     }
     public FraudAssessment analyzeRisk(Order order, String language) {
+        // 💡 將英文語系名稱轉換為該語系「本體的文字」，這對大模型的語系控制極其有效
+        String targetLangName = "English";
+        if ("SimplifiedChinese".equalsIgnoreCase(language)) {
+            targetLangName = "简体中文 (Simplified Chinese)";
+        } else if ("TraditionalChinese".equalsIgnoreCase(language)) {
+            targetLangName = "繁體中文 (Traditional Chinese)";
+        } else if ("Korean".equalsIgnoreCase(language)) {
+            targetLangName = "한국어 (Korean)";
+        } else if ("Japanese".equalsIgnoreCase(language)) {
+            targetLangName = "日本語 (Japanese)";
+        } else if ("French".equalsIgnoreCase(language)) {
+            targetLangName = "Français (French)";
+        } else {
+            targetLangName = language; // 預留其他語系
+        }
         String prompt = """
-        You are a Senior E-commerce Fraud Investigator.
-        Task: Perform a deep-dive fraud risk assessment on the following transaction.
-        Data to Analyze:
-        - Transaction Amount: %s %s
-        - Source IP Address: %s
-        - Shipping Destination: %s
-        - User Time Zone: %s
-        Instructions:
-        1. Evaluate the geopolitical risk, IP-to-Destination consistency, and Time Zone alignment.
-        2. Assess if the transaction amount is atypical for this route or time.
-        3. Formulate your reasoning step-by-step.
-        4. 💡 IMPORTANT: You must write the 'analysis' and 'reason' in %s.
-        Output Requirement: Return ONLY a JSON object with the following keys:
-        - 'analysis': A detailed step-by-step breakdown of your reasoning (max 150 words).
-        - 'risk_score': A float between 0.0 and 1.0 (Higher = Higher Risk).
-        - 'reason': A short, professional summary for the customer support dashboard (max 50 words).
-        Format: {"analysis": "...", "risk_score": 0.5, "reason": "..."}
-        """.formatted(
+    You are a Senior E-commerce Fraud Investigator.
+    Task: Perform a deep-dive fraud risk assessment on the following transaction.
+    Data to Analyze:
+    - Transaction Amount: %s %s
+    - Source IP Address: %s
+    - Shipping Destination: %s
+    - User Time Zone: %s
+    Instructions:
+    1. Evaluate the geopolitical risk, IP-to-Destination consistency, and Time Zone alignment.
+    2. Assess if the transaction amount is atypical for this route or time.
+    3. Formulate your reasoning step-by-step.
+    🚨🚨 CRITICAL REQUIREMENT 🚨🚨
+    You MUST write the internal text values for BOTH the 'analysis' and 'reason' fields using ONLY %s language. 
+    Do NOT use English, Korean, or any other language for these text values.
+    Output Requirement: Return ONLY a valid JSON object with the following keys. No conversational text before or after the JSON.
+    Format:
+    {
+      "analysis": "[Write your deep analysis here in %s]",
+      "risk_score": 0.5,
+      "reason": "[Write a short summary here in %s]"
+    }
+    """.formatted(
                 order.getAmount(),
                 order.getCurrency(),
                 order.getIpAddress(),
                 order.getShippingCountry(),
                 order.getZoneId(),
-                language
+                targetLangName,
+                targetLangName,
+                targetLangName
         );
         try {
             String content = invokeNova(prompt, 0.1);
@@ -92,9 +113,9 @@ public class FraudDetectionService {
                 return getSafetyNetAssessment("No JSON block found in AI response");
             }
         } catch (Exception e) {
-            // 系統級錯誤 (如 Bedrock Timeout) 的處理
+            // 系統級錯誤的處理
             e.printStackTrace();
-            // 在接案情境中，建議給予 0.5 中性分數並標記為 PENDING 或 MANUAL_REVIEW
+            // 給予 0.5 中性分數並標記為 MANUAL_REVIEW
             return new FraudAssessment(0.5, "System stability issue: " + e.getMessage(), "System Exception occurred during AI inference.", "MANUAL_REVIEW");
         }
     }

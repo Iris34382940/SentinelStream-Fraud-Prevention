@@ -1,0 +1,83 @@
+{
+  "info": {
+    "_postman_id": "0e2c9a6d-f220-4537-9907-717c972857ee",
+    "name": "SentinelStream API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "28641756"
+  },
+  "item": [
+    {
+      "name": "Submit Order",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "submit"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Settings",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/settings",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "settings"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "KK64PvUH4EFVslLn7W7h8VHvFLHH5bp18vTCMJO1",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "x-api-key",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}

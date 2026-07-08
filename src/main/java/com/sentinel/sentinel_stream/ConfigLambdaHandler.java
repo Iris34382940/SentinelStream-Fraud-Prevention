@@ -23,6 +23,7 @@ public class ConfigLambdaHandler implements RequestHandler<APIGatewayProxyReques
     private final String trendLambdaArn = System.getenv("TREND_LAMBDA_ARN");
     private final String schedulerRoleArn = System.getenv("SCHEDULER_ROLE_ARN");
     private final String defaultTimeZone = System.getenv().getOrDefault("TARGET_TIMEZONE", "Asia/Taipei");
+    private final String defaultLanguage = System.getenv().getOrDefault("TARGET_LANGUAGE", "English");
     private static final String CONFIG_PK = "SYSTEM_REPORT_STATE";
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent request, Context context) {
@@ -47,6 +48,7 @@ public class ConfigLambdaHandler implements RequestHandler<APIGatewayProxyReques
             }
         }
         body.putIfAbsent("targetTimeZone", defaultTimeZone);
+        body.putIfAbsent("targetLanguage", defaultLanguage);
         body.putIfAbsent("sendTime", "09:00");
     }
     private void saveConfigToDb(Map<String, Object> body) {
